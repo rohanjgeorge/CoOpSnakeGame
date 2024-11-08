@@ -10,6 +10,8 @@ TagManager:
   - ShieldPowerUp
   - ScoreBoostPowerUp
   - SpeedUpPowerUp
+  - GreenSnake
+  - RedSnake
   layers:
   - Default
   - TransparentFX

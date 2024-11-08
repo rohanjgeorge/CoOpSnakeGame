@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class SnakeControllerTwo : MonoBehaviour
@@ -35,11 +36,22 @@ public class SnakeControllerTwo : MonoBehaviour
     private float speedMultiplier = 1f;
 
     [SerializeField]
-    private float powerUpDuration = 3f; // Duration of power-ups in seconds
+    private float powerUpDuration = 10f; // Duration of power-ups in seconds
+
+    private int score = 0;
+
+    [SerializeField]
+    private TextMeshProUGUI scoreText; // Reference to the UI Text for score
+
+    [SerializeField]
+    private TextMeshProUGUI powerUpText; // Reference to the UI Text for power-up status
 
     // Start is called before the first frame update
     void Start()
     {
+        UpdateScoreUI();
+        UpdatePowerUpUI("None");
+
         screenLeft = Camera.main.ViewportToWorldPoint(Vector3.zero).x;
         screenRight = Camera.main.ViewportToWorldPoint(Vector3.right).x;
         screenBottom = Camera.main.ViewportToWorldPoint(Vector3.zero).y;
@@ -209,9 +221,24 @@ public class SnakeControllerTwo : MonoBehaviour
     {
         if (collision.CompareTag("BodySegment"))
         {
-            if (!shieldActive) {
+            if (bodySegments.Count > 0 && collision.gameObject == bodySegments[0].gameObject)
+        {
+            return; // Ignore this collision
+        }
+            if (!shieldActive)
+            {
                 Die();
             }
+        }
+        else if (collision.CompareTag("RedSnake"))
+        {
+            
+            GameOverController.Instance.GameOver("Green Snake", GetScore());
+        }
+        else if (collision.CompareTag("GreenSnake"))
+        {
+            
+            GameOverController.Instance.GameOver("Red Snake", GetScore());
         }
         else if (collision.CompareTag("MassGainer"))
         {
@@ -222,7 +249,8 @@ public class SnakeControllerTwo : MonoBehaviour
         else if (collision.CompareTag("MassBurner"))
         {
             Destroy(collision.gameObject);
-            if (bodySegments.Count > 1) ShrinkSnake();
+            if (bodySegments.Count > 1)
+                ShrinkSnake();
             IncreaseScore(-5);
         }
         else if (collision.CompareTag("ShieldPowerUp"))
@@ -254,7 +282,10 @@ public class SnakeControllerTwo : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log("Snake has died!");
+        string winner = gameObject.name == "SnakeTwoHead" ? "Green Snake" : "Red Snake";
+        GameOverController.Instance.GameOver(winner, GetScore());
+        Debug.Log("Red Snake has died!");
+        Debug.Log("Green Snake has died!" + gameObject.name);
         // Logic to reset the game or display a death screen here
     }
 
@@ -263,36 +294,65 @@ public class SnakeControllerTwo : MonoBehaviour
         return bodySegments.Count;
     }
 
+    
+    private int GetScore()
+    {
+        return score;
+    }
+
     private void ActivateShield()
     {
         shieldActive = true;
+        UpdatePowerUpUI("Shield");
         Invoke("DeactivateShield", powerUpDuration);
     }
 
     private void DeactivateShield()
     {
         shieldActive = false;
+        UpdatePowerUpUI("None");
     }
 
     private void ActivateScoreBoost()
     {
-        scoreMultiplier = 2f;
+        UpdatePowerUpUI("Score Boost");
+        scoreMultiplier = 3f;
         Invoke("ResetScoreMultiplier", powerUpDuration);
     }
 
     private void ResetScoreMultiplier()
     {
         scoreMultiplier = 1f;
+        UpdatePowerUpUI("None");
     }
 
     private void ActivateSpeedBoost()
     {
-        speedMultiplier = 1.5f; // Increase speed by 50%
+        UpdatePowerUpUI("Speed Boost");
+        speedMultiplier = 3f; // Increase speed by 50%
         Invoke("ResetSpeedMultiplier", powerUpDuration);
     }
 
     private void ResetSpeedMultiplier()
     {
         speedMultiplier = 1f;
+        UpdatePowerUpUI("None");
+    }
+
+    private void IncreaseScore(int points)
+    {
+        score += points;
+        Debug.Log("Score: " + score); // Output score to the console for testing
+        UpdateScoreUI();
+    }
+
+    private void UpdateScoreUI()
+    {
+        scoreText.text = "Red Snake Score: " + score;
+    }
+
+    private void UpdatePowerUpUI(string powerUp)
+    {
+        powerUpText.text = "Power-Up: " + powerUp;
     }
 }
